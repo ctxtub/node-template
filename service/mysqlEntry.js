@@ -1,6 +1,15 @@
 const mysql = require('mysql');
 const pool = mysql.createPool(require('../config/config').mysql);
 
+pool.getConnection((err, connection) => {
+  if (err) {
+    loggerSql.error("mysql init err: " + err);
+    return;
+  }
+  loggerSql.info("mysql init success!");
+  connection.release();
+}) 
+
 const queryStr = function (sql) {
 
   return new Promise((resolve, reject) => {
@@ -113,29 +122,3 @@ const query = function (originSql) {
 }
 
 module.exports = query;
-
-/*query(['select * from test where id = 1',
-'INSERT INTO `0926test`.`test` ( `name`, `sex`) VALUES ( \'233333\', \'1\')',
-'select * from test where id = 2'])
-  .then(data => {
-    console.log(data);
-    console.log('事务成功！');
-  })
-  .catch(err => {
-    console.log(err);
-    console.log('事务失败！');
-  })*/
-
-/*query('select * from test')
-  .then((data) => {
-    console.log(data);
-  }).catch((err) => {
-    console.log(err);
-  })*/
-
-/*query(1)
-  .then((data) => {
-    console.log(data);
-  }).catch((err) => {
-    console.log(err);
-  })*/

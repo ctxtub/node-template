@@ -1,6 +1,12 @@
 const redis = require('redis');
 const client = redis.createClient(require('../config/config').redis);
 
+client.on('error', (err) => {
+  loggerRedis.error("redis init err: " + err);
+})
+client.on('connect', () => {
+  loggerRedis.info("redis init success! ");
+})
 let redisFunction = {};
 
 redisFunction.native = client;
@@ -59,25 +65,3 @@ redisFunction.expire = function(key, expireTime) {
 };
 
 module.exports = redisFunction;
-
-
-// client.set("string key", "string val", redis.print);
-
-// this.expire('string key', 50).then(res=> {
-//   console.log(res);
-// }).catch(err => {
-//   console.log(err);
-// })
-
-
-// client.set("string key", "string val", redis.print);
-
-// client.hset("hash key", "hashtest 1", "some value", redis.print);
-// client.hset(["hash key", "hashtest 2", "some other value"], redis.print);
-// client.hkeys("hash key", function (err, replies) {
-//     console.log(replies.length + " replies:");
-//     replies.forEach(function (reply, i) {
-//         console.log("    " + i + ": " + reply);
-//     });
-//     client.quit();
-// });

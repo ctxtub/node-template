@@ -1,12 +1,10 @@
 const express = require('express');
 const log4js = require('log4js');
+const runService = require('./service/runService');
 const app = express();
-const interfaceParamsValidate = require('./lib/interfaceParamsValidate');
 
 // public method set
 InterfaceResponse = require('./lib/InterfaceResponse');
-query = require('./lib/query');
-redis = require('./lib/redis');
 
 // logInstance for different service
 loggerGlobal = require('./lib/log4js').logger('global');
@@ -18,35 +16,12 @@ loggerRedis = require('./lib/log4js').logger('redis');
 // record interface request
 app.use(log4js.connectLogger(loggerRouter, {level: 'auto', format: ':remote-addr - ":method :url" - :status - :response-timems'}));
 
-app.use('/',(req, res, next) => {
+// database entry
+mysql = runService.mysqlEntry;
+redis = runService.edisEntry;
 
-  const needParams = [
-    {
-      name: 'devices',
-      required: true,
-      type: 'Array'
-    }
-  ];
-
-  interfaceParamsValidate(needParams, req, res)
-    .then((data) => {
-
-      redis.set('string key', 50, 'EX', 100)
-        .then(data => {
-          res.InterfaceResponse = new InterfaceResponse(0 , data);
-          res.json(res.InterfaceResponse);
-        })
-        .catch(err => {
-          res.InterfaceResponse = new InterfaceResponse(40009 , {}, err);
-          res.json(res.InterfaceResponse);
-          console.log(err);
-        })
-
-    })
-    .catch((err) => {
-      res.json(res.InterfaceResponse);
-    });
-});
+// set api router
+app.use('/api', runService.apiRouter);
 
 //listening port
 let argv = {};
