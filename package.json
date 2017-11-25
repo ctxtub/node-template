@@ -1,8 +1,8 @@
 {
-  "name": "my",
+  "name": "node-frame",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A node-frame build with mysql & redis & express，logged by log4js. / 一个简易的nodejs框架，支持mysql、redis数据库，由express提供路由分发，log4js日志记录",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
