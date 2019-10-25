@@ -1,34 +1,41 @@
-const express = require('express');
-const log4js = require('log4js');
-const runService = require('./service/runService');
-const app = express();
+const path = require('path')
+const Koa = require('koa')
+const views = require('koa-views')
+const parser = require('koa-bodyparser')
+const koaStatic = require('koa-static')
+const koaMount = require('koa-mount')
+const app = new Koa()
 
-// public method set
-InterfaceResponse = require('./lib/InterfaceResponse');
+const { port, rootPath } = require('./config/config.json')
+const middlewares = require('./middlewares/index')
+// const register = require('./common/register')
 
-// logInstance for different service
-loggerGlobal = require('./lib/log4js').logger('global');
-loggerRouter = require('./lib/log4js').logger('router');
-loggerApi = require('./lib/log4js').logger('api');
-loggerSql = require('./lib/log4js').logger('sql');
-loggerRedis = require('./lib/log4js').logger('redis');
+// 公共数据
+app.use(
+  async (ctx, next) => {
+  // ejs模版中使用该变量动态加载对应模版
+    ctx.state = { RUN_ENV: 'dev' }
+    // 继续向下匹配路由
+    await next()
+  }
+)
 
-// record interface request
-app.use(log4js.connectLogger(loggerRouter, {level: 'auto', format: ':remote-addr - ":method :url" - :status - :response-timems'}));
+// 入口页-注意：必须放在路由注册前面
+app.use(
+  views(path.join(__dirname, '/'), {})
+)
+// post参数解析
+app.use(parser())
+// 自定义拦截器
+middlewares(app)
+// 模块注册
+// app.use(register.launch())
+// 静态资源支持
+app.use(
+  koaMount(`${rootPath}/static`, koaStatic(path.join(__dirname, './static')))
+)
 
-// database entry
-mysql = runService.mysqlEntry;
-redis = runService.edisEntry;
+app.listen(port)
 
-// set api router
-app.use('/api', runService.apiRouter);
-
-//listening port
-let argv = {};
-for (let i = 0; i < process.argv.length; i = i + 2) {
-	argv[process.argv[i]] = process.argv[i + 1];
-}
-const port = argv['--PORT'] || '3000';
-
-app.listen(port, '0.0.0.0');
-loggerGlobal.info('端口已开启 : ' + port);
+console.log('\n App running at:')
+console.log(' - Local:   http://localhost:' + port)
