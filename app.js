@@ -1,34 +1,37 @@
-const express = require('express');
-const log4js = require('log4js');
-const runService = require('./service/runService');
-const app = express();
+const path = require('path')
+const Koa = require('koa')
+const views = require('koa-views')
+const bodyParser = require('koa-bodyparser')
+const koaStatic = require('koa-static')
+const koaMount = require('koa-mount')
+const app = new Koa()
 
-// public method set
-InterfaceResponse = require('./lib/InterfaceResponse');
+const CONFIG = require('./CONFIG')
+const middlewares = require('./middlewares/index')
+const loggerDefault = require('./services/log4js')()
+const routes = require('./services/routerMount').mount()
 
-// logInstance for different service
-loggerGlobal = require('./lib/log4js').logger('global');
-loggerRouter = require('./lib/log4js').logger('router');
-loggerApi = require('./lib/log4js').logger('api');
-loggerSql = require('./lib/log4js').logger('sql');
-loggerRedis = require('./lib/log4js').logger('redis');
+// 加载模板引擎
+app.use(
+  views(path.join(__dirname, '/'), {
+    extension: 'ejs'
+  })
+)
+// post参数解析
+app.use(bodyParser())
+// 自定义拦截器
+middlewares(app)
+// 注册路由
+app.use(routes)
+// 注册静态资源路由
+app.use(
+  koaMount(`${CONFIG.rootPath}/static`, koaStatic(path.join(__dirname, './static')))
+)
 
-// record interface request
-app.use(log4js.connectLogger(loggerRouter, {level: 'auto', format: ':remote-addr - ":method :url" - :status - :response-timems'}));
+app.listen(CONFIG.port)
 
-// database entry
-mysql = runService.mysqlEntry;
-redis = runService.edisEntry;
+loggerDefault.info(`运行环境：${process.env.CUSTOM_ENV}`)
+loggerDefault.info(`运行配置：${JSON.stringify(CONFIG)}`)
 
-// set api router
-app.use('/api', runService.apiRouter);
-
-//listening port
-let argv = {};
-for (let i = 0; i < process.argv.length; i = i + 2) {
-	argv[process.argv[i]] = process.argv[i + 1];
-}
-const port = argv['--PORT'] || '3000';
-
-app.listen(port, '0.0.0.0');
-loggerGlobal.info('端口已开启 : ' + port);
+console.log('\n App running at:')
+console.log(` - Local:   http://localhost:${CONFIG.port}${CONFIG.rootPath}`)
