@@ -42,13 +42,13 @@ const index = () => async (ctx, next) => {
     switch (status) {
       case 404:
         // 渲染404页面
-        await ctx.render('/views/404')
+        await ctx.render('views/404.html')
         break
       case 500:
         // 记录Node错误
         loggerDefault.error(err)
         // 渲染500页面
-        await ctx.render('/views/500')
+        await ctx.render('views/500.html')
         break
     }
   }

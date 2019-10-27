@@ -1,41 +1,37 @@
 const path = require('path')
 const Koa = require('koa')
 const views = require('koa-views')
-const parser = require('koa-bodyparser')
+const bodyParser = require('koa-bodyparser')
 const koaStatic = require('koa-static')
 const koaMount = require('koa-mount')
 const app = new Koa()
 
-const { port, rootPath } = require('./config/config.json')
+const CONFIG = require('./CONFIG')
 const middlewares = require('./middlewares/index')
-// const register = require('./common/register')
+const loggerDefault = require('./services/log4js')()
+const routes = require('./services/routerMount').mount()
 
-// 公共数据
+// 加载模板引擎
 app.use(
-  async (ctx, next) => {
-  // ejs模版中使用该变量动态加载对应模版
-    ctx.state = { RUN_ENV: 'dev' }
-    // 继续向下匹配路由
-    await next()
-  }
-)
-
-// 入口页-注意：必须放在路由注册前面
-app.use(
-  views(path.join(__dirname, '/'), {})
+  views(path.join(__dirname, '/'), {
+    extension: 'ejs'
+  })
 )
 // post参数解析
-app.use(parser())
+app.use(bodyParser())
 // 自定义拦截器
 middlewares(app)
-// 模块注册
-// app.use(register.launch())
-// 静态资源支持
+// 注册路由
+app.use(routes)
+// 注册静态资源路由
 app.use(
-  koaMount(`${rootPath}/static`, koaStatic(path.join(__dirname, './static')))
+  koaMount(`${CONFIG.rootPath}/static`, koaStatic(path.join(__dirname, './static')))
 )
 
-app.listen(port)
+app.listen(CONFIG.port)
+
+loggerDefault.info(`运行环境：${process.env.CUSTOM_ENV}`)
+loggerDefault.info(`运行配置：${JSON.stringify(CONFIG)}`)
 
 console.log('\n App running at:')
-console.log(' - Local:   http://localhost:' + port)
+console.log(` - Local:   http://localhost:${CONFIG.port}${CONFIG.rootPath}`)
